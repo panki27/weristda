@@ -44,12 +44,11 @@ def save():
             f.write(entry + "\n")
         f.close()
 
-
 load()
 form = cgi.FieldStorage()
+
 print "Content-type: text/html"
 print
-
 print """
 <!DOCTYPE html>
 <html lang="en">
@@ -141,7 +140,6 @@ table += """
                 <input type = "submit" value = "Speichern" />
             </form>
         """
-
 print table
 
 print """

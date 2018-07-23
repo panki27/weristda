@@ -5,6 +5,9 @@ import cgitb; cgitb.enable()  # for troubleshooting
 import datetime
 
 LIST_LENGTH = 14
+NAME_LIST=["mama", "baba", "lea", "felix"]
+MEMORY_NAME = "anwesenheit"
+ENTRYS = []
 
 def wochentag(x):
     return {
@@ -17,6 +20,33 @@ def wochentag(x):
         6: "Sonntag"
     }[x]
 
+def load():
+    global ENTRYS
+    with open(MEMORY_NAME, 'r') as f:
+        ENTRYS = f.readlines()
+        f.close()
+    for i in range(len(ENTRYS)):
+        ENTRYS[i] = ENTRYS[i].strip()
+
+def add(input):
+    global ENTRYS
+    if input not in ENTRYS:
+        ENTRYS.append(input)
+
+def remove(input):
+    global ENTRYS
+    if input in ENTRYS:
+        ENTRYS.remove(input)
+
+def save():
+    with open(MEMORY_NAME, 'w') as f:
+        for entry in ENTRYS: 
+            f.write(entry + "\n")
+        f.close()
+
+
+load()
+form = cgi.FieldStorage()
 print "Content-type: text/html"
 print
 
@@ -64,14 +94,15 @@ print """
 """
 
 table = """
-        <table class=\"whosthere\">"
-            <tr>
-              <th>Wochentag</th>
-              <th>Mama</th> 
-              <th>Baba</th> 
-              <th>Lea</th> 
-              <th>Felix</th>
-            </tr>
+        <form action = \"weristda.py\" method = \"POST\" target = \"_self\">
+            <table class=\"whosthere\">"
+                <tr>
+                    <th>Wochentag</th>
+                    <th>Mama</th> 
+                    <th>Baba</th> 
+                    <th>Lea</th> 
+                    <th>Felix</th>
+                </tr>
 """
 
 today = datetime.date.today()
@@ -81,23 +112,37 @@ monday = today - datetime.timedelta(days=days_from_monday)
 for i in range(LIST_LENGTH):
     day = monday + datetime.timedelta(days=i)
     dayshort = day.strftime("%Y%m%d")
-    datestr = wochentag(day.weekday()) + ' , '
+    datestr = wochentag(day.weekday()) + ', '
     datestr += day.strftime("%d.%m.%Y")
-
     table += """
-            <tr>
-              <th>%s</th>
-              <th><input type=\"checkbox\" id=\"mama%s\" /></th> 
-              <th><input type=\"checkbox\" id=\"baba%s\" /></th> 
-              <th><input type=\"checkbox\" id=\"lea%s\" /></th> 
-              <th><input type=\"checkbox\" id=\"felix%s\" /></th>
-            </tr>
-    """ % (datestr, dayshort, dayshort, dayshort, dayshort)
+                    <tr>
+                        <th>%s</th>
+    """ % (datestr)
+
+    for name in NAME_LIST:
+        combo = name + dayshort
+        checkBox = "<th><input type=\"checkbox\" class=\"myCheckbox\" id=\"%s\" name=\"%s\"" % (combo, combo)
+        if(len(form)>0):
+            if form.getvalue(combo):
+                add(combo)
+                checkBox += " checked"
+            else:
+                remove(combo)
+        else:
+            if combo in ENTRYS:
+                add(combo)
+                checkBox += " checked"      
+        checkBox += " /></th>"
+        table += checkBox 
+    table += """
+                    </tr>
+    """
+table += """
+                <input type = "submit" value = "Speichern" />
+            </form>
+        """
 
 print table
-
-form = cgi.FieldStorage()
-
 
 print """
 
@@ -116,3 +161,4 @@ print """
   </footer>
 </html>
 """
+save()
